@@ -18,7 +18,7 @@ public class SecurityConfig {
    http.csrf(c->c.disable()).cors(c->c.configurationSource(cors()))
       .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(a->a
-       .requestMatchers("/api/v1/auth/**","/h2-console/**").permitAll()
+       .requestMatchers("/api/v1/auth/**","/api/v1/health","/h2-console/**").permitAll()
        .requestMatchers("/api/v1/practice/admin/**").hasRole("ADMIN")
        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
        .anyRequest().authenticated())
