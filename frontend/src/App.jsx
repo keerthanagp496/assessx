@@ -19,6 +19,9 @@ import { ProfileView } from './views/ProfileView';
 import { SettingsView } from './views/SettingsView';
 import { AdminDashboardView } from './views/AdminDashboardView';
 import { AdminPracticeManagerView } from './views/AdminPracticeManagerView';
+import { AdminAssessmentsView } from './views/AdminAssessmentsView';
+import { AdminSubmissionsView } from './views/AdminSubmissionsView';
+import { AdminUsersView } from './views/AdminUsersView';
 
 function AppContent() {
   const [user, setUser] = useState(() => {
@@ -44,6 +47,25 @@ function AppContent() {
     setActiveProblemId(null);
     setActiveExamId(null);
     toast.info('Signed out successfully.');
+  };
+
+  const handleToggleRole = (targetRole) => {
+    if (!user) return;
+    const isNowAdmin = targetRole === 'ROLE_ADMIN';
+    const updatedUser = {
+      ...user,
+      role: targetRole,
+      username: isNowAdmin ? (user.username === 'Student' ? 'Admin' : user.username) : (user.username === 'Admin' ? 'Student' : user.username)
+    };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    if (isNowAdmin) {
+      setActiveTab('admin_dashboard');
+      toast.success('Switched to Administrator Portal');
+    } else {
+      setActiveTab('dashboard');
+      toast.info('Switched to Student Workspace');
+    }
   };
 
   const handleSelectProblem = (id) => {
@@ -105,6 +127,7 @@ function AppContent() {
           setActiveProblemId(null);
         }}
         user={user}
+        onToggleRole={handleToggleRole}
         onLogout={handleLogout}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
@@ -115,6 +138,7 @@ function AppContent() {
         <Topbar
           user={user}
           onToggleMobileMenu={() => setMobileOpen(!mobileOpen)}
+          onToggleRole={handleToggleRole}
           onSearch={setSearchQuery}
           searchQuery={searchQuery}
         />
@@ -166,15 +190,28 @@ function AppContent() {
             <SettingsView user={user} />
           )}
 
+          {/* Admin Suite Views */}
           {activeTab === 'admin_dashboard' && (
             <AdminDashboardView
               onNavigateToQuestions={() => setActiveTab('admin_practice')}
-              onNavigateToAssessments={() => setActiveTab('assessments')}
+              onNavigateToAssessments={() => setActiveTab('admin_assessments')}
             />
           )}
 
           {activeTab === 'admin_practice' && (
             <AdminPracticeManagerView />
+          )}
+
+          {activeTab === 'admin_assessments' && (
+            <AdminAssessmentsView />
+          )}
+
+          {activeTab === 'admin_submissions' && (
+            <AdminSubmissionsView />
+          )}
+
+          {activeTab === 'admin_users' && (
+            <AdminUsersView />
           )}
         </main>
 

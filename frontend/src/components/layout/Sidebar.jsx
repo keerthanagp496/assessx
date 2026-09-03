@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
-export function Sidebar({ activeTab, onSelectTab, user, onLogout, mobileOpen, onCloseMobile }) {
+export function Sidebar({ activeTab, onSelectTab, user, onToggleRole, onLogout, mobileOpen, onCloseMobile }) {
   const { theme, toggleTheme, isDark } = useTheme();
   const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ADMIN';
 
-  const navItems = [
+  const studentNavGroups = [
     {
       group: 'OVERVIEW',
       items: [
@@ -35,15 +35,37 @@ export function Sidebar({ activeTab, onSelectTab, user, onLogout, mobileOpen, on
     }
   ];
 
-  if (isAdmin) {
-    navItems.push({
-      group: 'ADMINISTRATION',
+  const adminNavGroups = [
+    {
+      group: 'ADMIN OVERVIEW',
       items: [
-        { id: 'admin_dashboard', label: 'Admin Metrics', icon: '⚙️' },
-        { id: 'admin_practice', label: 'Question Bank', icon: '📝' }
+        { id: 'admin_dashboard', label: 'Admin Metrics', icon: '📊' }
       ]
-    });
-  }
+    },
+    {
+      group: 'CONTENT AUTHORING',
+      items: [
+        { id: 'admin_practice', label: 'Question Bank', icon: '📝' },
+        { id: 'admin_assessments', label: 'Exam Hub', icon: '🛡️' }
+      ]
+    },
+    {
+      group: 'AUDIT & CANDIDATES',
+      items: [
+        { id: 'admin_submissions', label: 'Submissions & Audit', icon: '📋' },
+        { id: 'admin_users', label: 'Candidate Directory', icon: '👥' }
+      ]
+    },
+    {
+      group: 'STUDENT PORTAL PREVIEW',
+      items: [
+        { id: 'dashboard', label: 'Student View', icon: '👀' },
+        { id: 'practice', label: 'Practice Arena', icon: '☕' }
+      ]
+    }
+  ];
+
+  const navGroups = isAdmin ? adminNavGroups : studentNavGroups;
 
   const handleItemClick = (id) => {
     onSelectTab(id);
@@ -69,9 +91,27 @@ export function Sidebar({ activeTab, onSelectTab, user, onLogout, mobileOpen, on
           </div>
         </div>
 
+        {/* Mode Switcher Banner */}
+        <div className="sidebar-mode-switcher-bar">
+          <button
+            type="button"
+            className={`mode-btn ${!isAdmin ? 'active' : ''}`}
+            onClick={() => onToggleRole?.('ROLE_STUDENT')}
+          >
+            👤 Student
+          </button>
+          <button
+            type="button"
+            className={`mode-btn ${isAdmin ? 'active admin-active' : ''}`}
+            onClick={() => onToggleRole?.('ROLE_ADMIN')}
+          >
+            👑 Admin Portal
+          </button>
+        </div>
+
         {/* Navigation Categories */}
         <nav className="sidebar-menu">
-          {navItems.map((sec) => (
+          {navGroups.map((sec) => (
             <div key={sec.group} className="sidebar-section">
               <div className="section-label">{sec.group}</div>
               <div className="section-items">
@@ -135,7 +175,7 @@ export function Sidebar({ activeTab, onSelectTab, user, onLogout, mobileOpen, on
             <div className="user-info">
               <span className="user-name">{user?.username || 'Student'}</span>
               <span className="user-role-badge">
-                {isAdmin ? 'Admin' : 'Java Developer'}
+                {isAdmin ? '👑 Administrator' : '👤 Java Developer'}
               </span>
             </div>
             <button

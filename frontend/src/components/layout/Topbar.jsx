@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
-export function Topbar({ user, onToggleMobileMenu, onSearch, searchQuery = '' }) {
+export function Topbar({ user, onToggleMobileMenu, onToggleRole, onSearch, searchQuery = '' }) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ADMIN';
 
   const notifications = [
     { id: 1, title: 'Weekly Java DSA Challenge', time: 'Starting in 2 hours', unread: true },
@@ -36,6 +37,17 @@ export function Topbar({ user, onToggleMobileMenu, onSearch, searchQuery = '' })
       </div>
 
       <div className="topbar-right">
+        {/* Role Toggle Switcher in Topbar */}
+        <button
+          type="button"
+          className={`topbar-role-pill ${isAdmin ? 'admin-pill' : 'student-pill'}`}
+          onClick={() => onToggleRole?.(isAdmin ? 'ROLE_STUDENT' : 'ROLE_ADMIN')}
+          title="Click to toggle between Student and Admin Portal"
+        >
+          <span>{isAdmin ? '👑 Admin Portal Active' : '👤 Student Mode'}</span>
+          <small className="switch-hint">(Switch)</small>
+        </button>
+
         {/* Telemetry Status Pill */}
         <div className="system-status-indicator">
           <span className="status-dot-green"></span>
@@ -74,8 +86,8 @@ export function Topbar({ user, onToggleMobileMenu, onSearch, searchQuery = '' })
 
         {/* User Identity Pill */}
         <div className="topbar-user-pill">
-          <span className="user-icon">👤</span>
-          <span className="user-name-short">{user?.username || 'Student'}</span>
+          <span className="user-icon">{isAdmin ? '👑' : '👤'}</span>
+          <span className="user-name-short">{user?.username || (isAdmin ? 'Admin' : 'Student')}</span>
         </div>
       </div>
     </header>
