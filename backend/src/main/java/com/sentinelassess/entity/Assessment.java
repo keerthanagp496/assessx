@@ -12,6 +12,7 @@ public class Assessment {
  @Column(length=5000) private String description;
  private int durationMinutes;
  private boolean published;
+ @Builder.Default
  @OneToMany(mappedBy="assessment",cascade=CascadeType.ALL,orphanRemoval=true)
  private List<AssessmentQuestion> questions=new ArrayList<>();
 }

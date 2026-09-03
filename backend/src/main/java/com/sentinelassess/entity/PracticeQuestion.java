@@ -23,6 +23,7 @@ public class PracticeQuestion {
  @Column(length=3000) private String sampleOutput;
  @Column(length=5000) private String explanation;
  @Column(length=20000) private String referenceSolution;
+ @Builder.Default
  private boolean active=true;
  private LocalDateTime createdAt;
  private LocalDateTime updatedAt;
