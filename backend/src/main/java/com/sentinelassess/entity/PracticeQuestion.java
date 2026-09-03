@@ -3,7 +3,6 @@ package com.sentinelassess.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.*;
 
 @Entity @Table(name="practice_questions")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
