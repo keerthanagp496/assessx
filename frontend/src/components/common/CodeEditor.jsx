@@ -158,16 +158,16 @@ export function CodeEditor({
             <button
               type="button"
               className="btn-icon-tiny"
-              onClick={() => setFontSize((s) => Math.max(11, s - 1))}
+              onClick={() => setFontSize((s) => Math.max(10, Math.round(s - 1)))}
               title="Decrease Font Size"
             >
               A-
             </button>
-            <span className="font-size-label">{fontSize}px</span>
+            <span className="font-size-label">{Math.round(fontSize)}px</span>
             <button
               type="button"
               className="btn-icon-tiny"
-              onClick={() => setFontSize((s) => Math.min(22, s + 1))}
+              onClick={() => setFontSize((s) => Math.min(26, Math.round(s + 1)))}
               title="Increase Font Size"
             >
               A+
