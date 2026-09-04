@@ -417,13 +417,14 @@ input:focus, textarea:focus, select:focus {
   flex-direction: column;
   min-width: 0;
   width: 100%;
+  background: var(--bg-app);
 }
 
 .view-content-wrapper {
-  padding: 22px clamp(16px, 2.5vw, 36px);
-  max-width: 1680px;
+  padding: 24px clamp(16px, 2.5vw, 36px);
   width: 100%;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   box-sizing: border-box;
 }
 
@@ -879,9 +880,21 @@ input:focus, textarea:focus, select:focus {
    ========================================================================== */
 .stats-metric-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 1100px) {
+  .stats-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-metric-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .metric-card {
