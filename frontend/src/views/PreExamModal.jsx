@@ -161,15 +161,19 @@ export function PreExamModal({ assessment, onStart, onCancel }) {
             <div className="anti-cheat-policy-box">
               <div className="policy-item">
                 <span>🚫</span>
-                <span>Clipboard shortcuts (<code>Ctrl+C</code>, <code>Ctrl+V</code>) are blocked and logged.</span>
+                <span>All <code>Ctrl</code> / <code>Cmd</code> keys and clipboard (Copy/Paste) are blocked and logged.</span>
+              </div>
+              <div className="policy-item">
+                <span>📱</span>
+                <span>Live AI Camera monitors visual frame — mobile phone presence triggers immediate violation.</span>
               </div>
               <div className="policy-item">
                 <span>⚠️</span>
-                <span>Exiting fullscreen or switching browser tabs registers a security violation.</span>
+                <span>Exiting fullscreen or switching browser tabs/windows registers a security violation.</span>
               </div>
               <div className="policy-item danger">
                 <span>🚨</span>
-                <span>Reaching 10 violations triggers auto-disqualification and locks the exam.</span>
+                <span>Reaching 5 violations triggers instant auto-submission and disqualification.</span>
               </div>
             </div>
           </div>

@@ -37,21 +37,27 @@ export function Topbar({ user, onToggleMobileMenu, onToggleRole, onSearch, searc
       </div>
 
       <div className="topbar-right">
-        {/* Role Toggle Switcher in Topbar */}
-        <button
-          type="button"
-          className={`topbar-role-pill ${isAdmin ? 'admin-pill' : 'student-pill'}`}
-          onClick={() => onToggleRole?.(isAdmin ? 'ROLE_STUDENT' : 'ROLE_ADMIN')}
-          title="Click to toggle between Student and Admin Portal"
-        >
-          <span>{isAdmin ? '👑 Admin Portal Active' : '👤 Student Mode'}</span>
-          <small className="switch-hint">(Switch)</small>
-        </button>
+        {/* Role Indicator / Switcher for Admins */}
+        {isAdmin ? (
+          <button
+            type="button"
+            className="topbar-role-pill admin-pill"
+            onClick={() => onToggleRole?.(user?.role === 'ROLE_ADMIN' ? 'ROLE_STUDENT' : 'ROLE_ADMIN')}
+            title="Administrator Mode"
+          >
+            <span>👑 Administrator</span>
+          </button>
+        ) : (
+          <div className="topbar-role-pill student-pill" style={{ cursor: 'default' }}>
+            <span>🎓 Student</span>
+            <small style={{ opacity: 0.8, marginLeft: '4px' }}>({user?.userClass?.split(' - ')[0] || 'Enrolled'})</small>
+          </div>
+        )}
 
         {/* Telemetry Status Pill */}
         <div className="system-status-indicator">
           <span className="status-dot-green"></span>
-          <span className="status-label">System Active</span>
+          <span className="status-label">Proctoring Ready</span>
         </div>
 
         {/* Notifications Bell */}

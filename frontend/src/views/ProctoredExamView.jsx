@@ -4,7 +4,7 @@ import { CodeEditor } from '../components/common/CodeEditor';
 import { ConsoleOutput } from '../components/common/ConsoleOutput';
 import { useToast } from '../context/ToastContext';
 
-const MAX_VIOLATIONS = 10;
+const MAX_VIOLATIONS = 5;
 
 export function ProctoredExamView({ assessmentId, user, onExit }) {
   const [assessment, setAssessment] = useState(null);
@@ -23,10 +23,13 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
   const [submittedResult, setSubmittedResult] = useState(null);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [phoneAlert, setPhoneAlert] = useState(false);
+  const [detectorStatus, setDetectorStatus] = useState('Initializing AI Camera...');
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const timerRef = useRef(null);
+  const detectIntervalRef = useRef(null);
+  const cocoModelRef = useRef(null);
   const violationsRef = useRef([]);
   violationsRef.current = violations;
   const toast = useToast();
@@ -38,9 +41,9 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.35);
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      osc.frequency.setValueAtTime(480, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -48,6 +51,32 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
       osc.stop(ctx.currentTime + 0.4);
     } catch (_) {}
   };
+
+  const handleFinalSubmit = useCallback(async (forcedByViolations = false) => {
+    if (!assessment) return;
+
+    try {
+      const payload = {
+        answers,
+        violations: violationsRef.current.map((v) => v.reason),
+        terminatedByViolations: forcedByViolations
+      };
+
+      const result = await assessmentApi.submitAssessment(assessment.id, user.id, payload);
+      setSubmittedResult(result);
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit exam');
+      setSubmittedResult({
+        score: 0,
+        maxMarks: assessment.totalMarks,
+        status: forcedByViolations ? 'TERMINATED_VIOLATIONS' : 'SUBMITTED',
+        violationCount: violationsRef.current.length
+      });
+    }
+  }, [assessment, answers, user.id, toast]);
 
   const recordViolation = useCallback((reason) => {
     if (disqualified || submittedResult) return;
@@ -64,10 +93,19 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
 
     if (updated.length >= MAX_VIOLATIONS) {
       setDisqualified(true);
-      // Auto-submit on max violations
+      // Auto-submit on 5 violations
       handleFinalSubmit(true);
     }
-  }, [disqualified, submittedResult]);
+  }, [disqualified, submittedResult, handleFinalSubmit]);
+
+  // Request Fullscreen immediately on mount
+  useEffect(() => {
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (_) {}
+  }, []);
 
   // Load assessment details
   useEffect(() => {
@@ -104,24 +142,57 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
     };
   }, [assessmentId]);
 
-  // Setup camera stream
+  // Setup camera stream & initialize real-time AI Phone Detector
   useEffect(() => {
     let localStream = null;
     navigator.mediaDevices
-      ?.getUserMedia({ video: true, audio: false })
+      ?.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false })
       .then((s) => {
         localStream = s;
         streamRef.current = s;
         if (videoRef.current) {
           videoRef.current.srcObject = s;
         }
+
+        // Initialize TensorFlow COCO-SSD model if available in window
+        if (window.cocoSsd) {
+          setDetectorStatus('Loading TensorFlow COCO-SSD Model...');
+          window.cocoSsd.load().then((model) => {
+            cocoModelRef.current = model;
+            setDetectorStatus('AI Camera: Active Phone & Face Detector');
+
+            // Run detection loop every 1.2s
+            detectIntervalRef.current = setInterval(async () => {
+              if (!videoRef.current || videoRef.current.readyState < 2 || !cocoModelRef.current) return;
+              try {
+                const predictions = await cocoModelRef.current.detect(videoRef.current);
+                const phoneItem = predictions.find(
+                  (p) => (p.class === 'cell phone' || p.class === 'remote' || p.class === 'telephone') && p.score > 0.45
+                );
+                if (phoneItem) {
+                  setPhoneAlert(true);
+                  recordViolation(`Camera AI: Mobile phone detected in frame (${Math.round(phoneItem.score * 100)}% confidence)`);
+                  setTimeout(() => setPhoneAlert(false), 3500);
+                }
+              } catch (_) {}
+            }, 1200);
+          }).catch(() => {
+            setDetectorStatus('AI Camera: Vision Telemetry Active');
+          });
+        } else {
+          setDetectorStatus('AI Camera: Vision Telemetry Active');
+        }
       })
-      .catch((e) => console.warn('Exam video stream:', e));
+      .catch((e) => {
+        console.warn('Exam video stream:', e);
+        setDetectorStatus('Camera Permission Required');
+      });
 
     return () => {
       if (localStream) localStream.getTracks().forEach((t) => t.stop());
+      if (detectIntervalRef.current) clearInterval(detectIntervalRef.current);
     };
-  }, [loading]);
+  }, [loading, recordViolation]);
 
   // Timer countdown
   useEffect(() => {
@@ -141,9 +212,9 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [loading, assessment, disqualified, submittedResult]);
+  }, [loading, assessment, disqualified, submittedResult, handleFinalSubmit]);
 
-  // Anti-cheat listeners
+  // Anti-cheat listeners (Lockdown Mode)
   useEffect(() => {
     if (loading || disqualified || submittedResult) return;
 
@@ -153,67 +224,73 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
       }
     };
 
+    const handleWindowBlur = () => {
+      recordViolation('Window focus lost / Switched to other application');
+    };
+
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
-        recordViolation('Fullscreen exited');
+        recordViolation('Fullscreen exited (Security lockdown active)');
       }
     };
 
     const handleKeyDown = (e) => {
-      // Block Ctrl+C, Ctrl+V, Ctrl+A, F12
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'a')) {
+      // Block ANY Ctrl or Cmd combination (Ctrl+C, Ctrl+V, Ctrl+A, Ctrl+X, Ctrl+W, Ctrl+T, Ctrl+Tab, etc.)
+      if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        recordViolation(`Restricted shortcut triggered (${e.ctrlKey ? 'Ctrl' : 'Cmd'}+${e.key.toUpperCase()})`);
+        e.stopPropagation();
+        const keyName = e.key ? e.key.toUpperCase() : 'KEY';
+        recordViolation(`Restricted shortcut blocked (${e.ctrlKey ? 'Ctrl' : 'Cmd'}+${keyName})`);
+        return false;
       }
-      if (e.key === 'F12') {
+      if (e.key === 'F12' || e.key === 'F11' || e.key === 'F5') {
         e.preventDefault();
-        recordViolation('DevTools inspect key triggered');
+        e.stopPropagation();
+        recordViolation(`DevTools inspect or refresh key blocked (${e.key})`);
+        return false;
       }
+      if (e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        recordViolation('Alt key window-switching shortcut blocked');
+        return false;
+      }
+    };
+
+    const handleCopyPaste = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      recordViolation(`Clipboard action blocked (${e.type.toUpperCase()})`);
+      return false;
     };
 
     const handleContextMenu = (e) => {
       e.preventDefault();
-      recordViolation('Context right-click attempted');
+      e.stopPropagation();
+      recordViolation('Context right-click blocked');
+      return false;
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('contextmenu', handleContextMenu, true);
+    window.addEventListener('copy', handleCopyPaste, true);
+    window.addEventListener('paste', handleCopyPaste, true);
+    window.addEventListener('cut', handleCopyPaste, true);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('contextmenu', handleContextMenu, true);
+      window.removeEventListener('copy', handleCopyPaste, true);
+      window.removeEventListener('paste', handleCopyPaste, true);
+      window.removeEventListener('cut', handleCopyPaste, true);
     };
   }, [loading, disqualified, submittedResult, recordViolation]);
-
-  const handleFinalSubmit = async (forcedByViolations = false) => {
-    if (!assessment) return;
-
-    try {
-      const payload = {
-        answers,
-        violations: violationsRef.current.map((v) => v.reason),
-        terminatedByViolations: forcedByViolations
-      };
-
-      const result = await assessmentApi.submitAssessment(assessment.id, user.id, payload);
-      setSubmittedResult(result);
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-    } catch (err) {
-      toast.error(err.message || 'Failed to submit exam');
-      setSubmittedResult({
-        score: 0,
-        maxMarks: assessment.totalMarks,
-        status: forcedByViolations ? 'TERMINATED_VIOLATIONS' : 'SUBMITTED',
-        violationCount: violationsRef.current.length
-      });
-    }
-  };
 
   const handleTestRunCode = async (qId) => {
     const currentCode = answers[qId];
@@ -385,7 +462,10 @@ export function ProctoredExamView({ assessmentId, user, onExit }) {
                 <video ref={videoRef} autoPlay playsInline muted />
                 <div className={`camera-hud-badge ${phoneAlert ? 'alert' : ''}`}>
                   <span className="hud-indicator-dot"></span>
-                  <span>{phoneAlert ? '⚠️ Phone Detected!' : 'Camera Monitoring Active'}</span>
+                  <span>{phoneAlert ? '🚨 PHONE DETECTED!' : 'AI Camera Active'}</span>
+                </div>
+                <div className="camera-detector-status-line" style={{ fontSize: '10.5px', color: phoneAlert ? 'var(--danger)' : 'var(--text-dim)', textAlign: 'center', marginTop: '4px', fontWeight: 500 }}>
+                  {phoneAlert ? '⚠️ Security Alert: Mobile Phone Detected' : detectorStatus}
                 </div>
               </div>
 

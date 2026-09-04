@@ -17,11 +17,16 @@ import { LeaderboardView } from './views/LeaderboardView';
 import { AnalyticsView } from './views/AnalyticsView';
 import { ProfileView } from './views/ProfileView';
 import { SettingsView } from './views/SettingsView';
+import { QuickPrepView } from './views/QuickPrepView';
+import { QuickPrepTopicView } from './views/QuickPrepTopicView';
+import { QuickPrepTimeMode } from './views/QuickPrepTimeMode';
 import { AdminDashboardView } from './views/AdminDashboardView';
 import { AdminPracticeManagerView } from './views/AdminPracticeManagerView';
 import { AdminAssessmentsView } from './views/AdminAssessmentsView';
 import { AdminSubmissionsView } from './views/AdminSubmissionsView';
 import { AdminUsersView } from './views/AdminUsersView';
+import { AdminQuickPrepView } from './views/AdminQuickPrepView';
+import { quickprepApi } from './api/client';
 
 function AppContent() {
   const [user, setUser] = useState(() => {
@@ -35,9 +40,26 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeProblemId, setActiveProblemId] = useState(null);
   const [activeExamId, setActiveExamId] = useState(null);
+  const [activeTopicId, setActiveTopicId] = useState(null);
+  const [activeTimeDuration, setActiveTimeDuration] = useState(null);
+  const [allTopics, setAllTopics] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const toast = useToast();
+
+  useEffect(() => {
+    quickprepApi.getTopics()
+      .then(setAllTopics)
+      .catch(() => {});
+  }, []);
+
+  // Strict route protection: non-admins cannot stay on admin tabs
+  useEffect(() => {
+    const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ADMIN';
+    if (!isAdmin && activeTab.startsWith('admin_')) {
+      setActiveTab('dashboard');
+    }
+  }, [user, activeTab]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -46,6 +68,8 @@ function AppContent() {
     setActiveTab('dashboard');
     setActiveProblemId(null);
     setActiveExamId(null);
+    setActiveTopicId(null);
+    setActiveTimeDuration(null);
     toast.info('Signed out successfully.');
   };
 
@@ -117,6 +141,22 @@ function AppContent() {
     );
   }
 
+  // Active Time-Based Revision Sprint Mode
+  if (activeTimeDuration) {
+    return (
+      <QuickPrepTimeMode
+        duration={activeTimeDuration}
+        user={user}
+        onExit={() => setActiveTimeDuration(null)}
+        onSelectTopic={(id) => {
+          setActiveTimeDuration(null);
+          setActiveTopicId(id);
+          setActiveTab('quickprep');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="app-shell-layout">
       {/* Navigation Sidebar */}
@@ -125,6 +165,8 @@ function AppContent() {
         onSelectTab={(tab) => {
           setActiveTab(tab);
           setActiveProblemId(null);
+          setActiveTopicId(null);
+          setActiveTimeDuration(null);
         }}
         user={user}
         onToggleRole={handleToggleRole}
@@ -139,7 +181,12 @@ function AppContent() {
           user={user}
           onToggleMobileMenu={() => setMobileOpen(!mobileOpen)}
           onToggleRole={handleToggleRole}
-          onSearch={setSearchQuery}
+          onSearch={(query) => {
+            setSearchQuery(query);
+            if (query && activeTab !== 'practice' && activeTab !== 'quickprep') {
+              setActiveTab('quickprep');
+            }
+          }}
           searchQuery={searchQuery}
         />
 
@@ -149,9 +196,31 @@ function AppContent() {
               user={user}
               onNavigateToPractice={() => setActiveTab('practice')}
               onNavigateToAssessments={() => setActiveTab('assessments')}
+              onNavigateToQuickPrep={() => {
+                setActiveTab('quickprep');
+                setActiveTopicId(null);
+              }}
               onSelectProblem={handleSelectProblem}
               onStartAssessment={handleStartExam}
             />
+          )}
+
+          {activeTab === 'quickprep' && (
+            activeTopicId ? (
+              <QuickPrepTopicView
+                topicId={activeTopicId}
+                user={user}
+                onBack={() => setActiveTopicId(null)}
+                onNavigateTopic={(nextId) => setActiveTopicId(nextId)}
+                allTopics={allTopics}
+              />
+            ) : (
+              <QuickPrepView
+                user={user}
+                onSelectTopic={(id) => setActiveTopicId(id)}
+                onStartTimeMode={(dur) => setActiveTimeDuration(dur)}
+              />
+            )
           )}
 
           {activeTab === 'practice' && (
@@ -198,6 +267,10 @@ function AppContent() {
             />
           )}
 
+          {activeTab === 'admin_quickprep' && (
+            <AdminQuickPrepView />
+          )}
+
           {activeTab === 'admin_practice' && (
             <AdminPracticeManagerView />
           )}
@@ -221,6 +294,8 @@ function AppContent() {
           onSelectTab={(tab) => {
             setActiveTab(tab);
             setActiveProblemId(null);
+            setActiveTopicId(null);
+            setActiveTimeDuration(null);
           }}
         />
       </div>

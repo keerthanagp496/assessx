@@ -79,10 +79,10 @@ public class AssessmentService {
 
         int totalMarks = a.getQuestions().stream().mapToInt(AssessmentQuestion::getMarks).sum();
 
-        // If violations >= 10, ensure status is TERMINATED_VIOLATIONS and score is 0
+        // If violations >= 5, ensure status is TERMINATED_VIOLATIONS and score is 0
         String status = req.status();
         int finalScore = req.score();
-        if (req.violationCount() >= 10 || "TERMINATED_VIOLATIONS".equalsIgnoreCase(status)) {
+        if (req.violationCount() >= 5 || "TERMINATED_VIOLATIONS".equalsIgnoreCase(status)) {
             status = "TERMINATED_VIOLATIONS";
             finalScore = 0;
         } else if (status == null || status.isBlank()) {

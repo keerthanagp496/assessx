@@ -3,10 +3,10 @@ import React from 'react';
 export function MobileNav({ activeTab, onSelectTab }) {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'quickprep', label: '⚡ QuickPrep', icon: '⚡' },
     { id: 'practice', label: 'Practice', icon: '☕' },
     { id: 'assessments', label: 'Assess', icon: '🛡️' },
-    { id: 'leaderboard', label: 'Ranks', icon: '🏆' },
-    { id: 'profile', label: 'Profile', icon: '👤' }
+    { id: 'leaderboard', label: 'Ranks', icon: '🏆' }
   ];
 
   return (

@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import { StatusBadge } from '../components/common/Badge';
+import { useToast } from '../context/ToastContext';
 
 export function AdminSubmissionsView() {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [search, setSearch] = useState('');
+  const [assessmentFilter, setAssessmentFilter] = useState('ALL');
+  const [classFilter, setClassFilter] = useState('ALL');
+  const [attendanceFilter, setAttendanceFilter] = useState('ALL');
+  const toast = useToast();
 
-  const mockSubmissions = [
+  const mockCandidateRoster = [
     {
       id: 'sub-101',
       candidateName: 'Karthik P',
       candidateEmail: 'student@sentinelassess.local',
+      candidateClass: 'Second Year - Java & DSA',
       assessmentTitle: 'Sentinel Core Java & Data Structures Proctored Assessment',
       score: 85,
       maxMarks: 100,
+      percentage: 85,
       passedQuestions: '4 / 4',
+      attendanceStatus: 'ATTENDED',
       status: 'ACCEPTED',
       violations: 1,
       violationLogs: [
@@ -25,10 +33,13 @@ export function AdminSubmissionsView() {
       id: 'sub-102',
       candidateName: 'Alex Chen',
       candidateEmail: 'alex.chen@dev.io',
+      candidateClass: 'Final Year - Placement & Systems',
       assessmentTitle: 'Advanced Full-Stack & System Logic Proctored Challenge',
       score: 95,
       maxMarks: 100,
+      percentage: 95,
       passedQuestions: '4 / 4',
+      attendanceStatus: 'ATTENDED',
       status: 'ACCEPTED',
       violations: 0,
       violationLogs: [],
@@ -38,10 +49,13 @@ export function AdminSubmissionsView() {
       id: 'sub-103',
       candidateName: 'Samira Khan',
       candidateEmail: 'samira.k@outlook.com',
+      candidateClass: 'Second Year - Java & DSA',
       assessmentTitle: 'Software Engineering & Algorithms Fast-Track Test',
       score: 0,
       maxMarks: 100,
+      percentage: 0,
       passedQuestions: '0 / 3',
+      attendanceStatus: 'ATTENDED',
       status: 'TERMINATED_VIOLATIONS',
       violations: 10,
       violationLogs: [
@@ -57,10 +71,13 @@ export function AdminSubmissionsView() {
       id: 'sub-104',
       candidateName: 'Ravi Kumar',
       candidateEmail: 'ravi.kumar@tech.in',
+      candidateClass: 'Second Year - Java & DSA',
       assessmentTitle: 'Sentinel Core Java & Data Structures Proctored Assessment',
       score: 75,
       maxMarks: 100,
+      percentage: 75,
       passedQuestions: '3 / 4',
+      attendanceStatus: 'ATTENDED',
       status: 'ACCEPTED',
       violations: 2,
       violationLogs: [
@@ -68,54 +85,249 @@ export function AdminSubmissionsView() {
         '19:25:40 PM — Fullscreen exited'
       ],
       date: 'Sep 03, 2026 • 19:30'
+    },
+    {
+      id: 'sub-105',
+      candidateName: 'Priya Sharma',
+      candidateEmail: 'priya.s@university.edu',
+      candidateClass: 'Second Year - Java & DSA',
+      assessmentTitle: 'Sentinel Core Java & Data Structures Proctored Assessment',
+      score: 0,
+      maxMarks: 100,
+      percentage: 0,
+      passedQuestions: '0 / 4',
+      attendanceStatus: 'ABSENT',
+      status: 'NOT_ATTENDED',
+      violations: 0,
+      violationLogs: [],
+      date: 'N/A (Did not attend)'
+    },
+    {
+      id: 'sub-106',
+      candidateName: 'David Miller',
+      candidateEmail: 'd.miller@campus.org',
+      candidateClass: 'Final Year - Placement & Systems',
+      assessmentTitle: 'Advanced Full-Stack & System Logic Proctored Challenge',
+      score: 0,
+      maxMarks: 100,
+      percentage: 0,
+      passedQuestions: '0 / 4',
+      attendanceStatus: 'ABSENT',
+      status: 'NOT_ATTENDED',
+      violations: 0,
+      violationLogs: [],
+      date: 'N/A (Did not attend)'
+    },
+    {
+      id: 'sub-107',
+      candidateName: 'Ananya Gupta',
+      candidateEmail: 'ananya.g@tech.ac.in',
+      candidateClass: 'Second Year - Java & DSA',
+      assessmentTitle: 'Sentinel Core Java & Data Structures Proctored Assessment',
+      score: 90,
+      maxMarks: 100,
+      percentage: 90,
+      passedQuestions: '4 / 4',
+      attendanceStatus: 'ATTENDED',
+      status: 'ACCEPTED',
+      violations: 0,
+      violationLogs: [],
+      date: 'Sep 03, 2026 • 18:45'
     }
   ];
 
-  const filtered = mockSubmissions.filter(
-    (s) =>
+  const filtered = mockCandidateRoster.filter((s) => {
+    const matchesSearch =
       s.candidateName.toLowerCase().includes(search.toLowerCase()) ||
       s.assessmentTitle.toLowerCase().includes(search.toLowerCase()) ||
-      s.candidateEmail.toLowerCase().includes(search.toLowerCase())
-  );
+      s.candidateEmail.toLowerCase().includes(search.toLowerCase());
+
+    const matchesAssessment =
+      assessmentFilter === 'ALL' || s.assessmentTitle === assessmentFilter;
+
+    const matchesClass =
+      classFilter === 'ALL' || s.candidateClass === classFilter;
+
+    const matchesAttendance =
+      attendanceFilter === 'ALL' || s.attendanceStatus === attendanceFilter;
+
+    return matchesSearch && matchesAssessment && matchesClass && matchesAttendance;
+  });
+
+  // Calculate statistics
+  const totalEnrolled = filtered.length;
+  const totalAttended = filtered.filter(f => f.attendanceStatus === 'ATTENDED').length;
+  const totalAbsent = filtered.filter(f => f.attendanceStatus === 'ABSENT').length;
+  const attendedScores = filtered.filter(f => f.attendanceStatus === 'ATTENDED').map(f => f.score);
+  const avgScore = attendedScores.length > 0
+    ? Math.round(attendedScores.reduce((a, b) => a + b, 0) / attendedScores.length)
+    : 0;
+
+  // CSV Report Generator & Downloader
+  const handleDownloadReportCSV = () => {
+    const headers = [
+      'Candidate Name',
+      'Email Address',
+      'Academic Class / Cohort',
+      'Assessment Title',
+      'Attendance Status',
+      'Verdict',
+      'Score Obtained',
+      'Max Marks',
+      'Percentage (%)',
+      'Anti-Cheat Violations',
+      'Submission Timestamp'
+    ];
+
+    const rows = filtered.map(item => [
+      `"${item.candidateName}"`,
+      `"${item.candidateEmail}"`,
+      `"${item.candidateClass}"`,
+      `"${item.assessmentTitle}"`,
+      `"${item.attendanceStatus}"`,
+      `"${item.status}"`,
+      item.score,
+      item.maxMarks,
+      `${item.percentage}%`,
+      item.violations,
+      `"${item.date}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `SentinelAssess_Attendance_Score_Report_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success(`Exported CSV report with ${filtered.length} candidate records.`);
+  };
 
   return (
     <div className="view-content-wrapper">
       <div className="admin-hero-header">
         <div>
-          <span className="admin-tag">📊 Candidate Submissions</span>
-          <h1 className="admin-title">Exam Audit & Telemetry Logs</h1>
+          <span className="admin-tag">📊 Examination Reports & Audit</span>
+          <h1 className="admin-title">Candidate Attendance & Score Reports</h1>
           <p className="admin-subtitle">
-            Inspect real-time candidate attempts, verified scores, and tamper-proof anti-cheat violation registries.
+            Categorize candidate attendance, audit proctored submission scores by class level, and export CSV diagnostic spreadsheets.
           </p>
         </div>
+
+        <button
+          type="button"
+          className="btn btn-primary btn-lg"
+          onClick={handleDownloadReportCSV}
+        >
+          📥 Download Attendance & Score Report (CSV)
+        </button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="admin-table-filter-bar">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Filter by candidate name, email, or assessment..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <div className="table-count-label">
-          Showing <strong>{filtered.length}</strong> recorded submissions
+      {/* KPI Metrics Strip */}
+      <div className="stats-metric-grid">
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-title">Total Candidates</span>
+            <span className="metric-icon-box bg-blue">👥</span>
+          </div>
+          <div className="metric-value">{totalEnrolled}</div>
+          <div className="metric-footnote">Enrolled in selected scope</div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-title">Attended & Submitted</span>
+            <span className="metric-icon-box bg-green">✓</span>
+          </div>
+          <div className="metric-value text-success">{totalAttended}</div>
+          <div className="metric-footnote">
+            {totalEnrolled > 0 ? `${Math.round((totalAttended / totalEnrolled) * 100)}% attendance rate` : '0%'}
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-title">Absent / Not Attended</span>
+            <span className="metric-icon-box bg-amber">✗</span>
+          </div>
+          <div className="metric-value text-warning">{totalAbsent}</div>
+          <div className="metric-footnote">Did not start examination</div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-header">
+            <span className="metric-title">Attended Average Score</span>
+            <span className="metric-icon-box bg-purple">📈</span>
+          </div>
+          <div className="metric-value">{avgScore} / 100</div>
+          <div className="metric-footnote">Class performance mean</div>
         </div>
       </div>
 
-      {/* Audit Table */}
+      {/* Multi-Dimensional Filter Bar */}
+      <div className="admin-filter-bar-row">
+        <div className="search-input-box">
+          <span>🔍</span>
+          <input
+            type="text"
+            placeholder="Search candidate name, email, or assessment..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Assessment Dropdown */}
+        <select
+          className="admin-select-dropdown"
+          value={assessmentFilter}
+          onChange={(e) => setAssessmentFilter(e.target.value)}
+        >
+          <option value="ALL">All Assessments</option>
+          <option value="Sentinel Core Java & Data Structures Proctored Assessment">Sentinel Core Java Proctored</option>
+          <option value="Advanced Full-Stack & System Logic Proctored Challenge">Advanced Full-Stack Challenge</option>
+          <option value="Software Engineering & Algorithms Fast-Track Test">Algorithms Fast-Track Test</option>
+        </select>
+
+        {/* Class Level Dropdown */}
+        <select
+          className="admin-select-dropdown"
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+        >
+          <option value="ALL">All Classes / Cohorts</option>
+          <option value="Second Year - Java & DSA">Second Year - Java & DSA</option>
+          <option value="Final Year - Placement & Systems">Final Year - Placement & Systems</option>
+        </select>
+
+        {/* Attendance Status Dropdown */}
+        <select
+          className="admin-select-dropdown"
+          value={attendanceFilter}
+          onChange={(e) => setAttendanceFilter(e.target.value)}
+        >
+          <option value="ALL">All Attendance Status</option>
+          <option value="ATTENDED">Attended Only</option>
+          <option value="ABSENT">Absent Only (Not Attended)</option>
+        </select>
+      </div>
+
+      {/* Audit & Attendance Table */}
       <div className="table-responsive-container">
         <table className="modern-table">
           <thead>
             <tr>
               <th>Candidate</th>
+              <th>Class / Cohort</th>
               <th>Assessment</th>
-              <th>Verdict / Status</th>
+              <th>Attendance</th>
               <th>Score</th>
-              <th>Items Passed</th>
+              <th>Accuracy</th>
               <th>Violations</th>
-              <th>Submitted At</th>
+              <th>Attempt Time</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -132,31 +344,56 @@ export function AdminSubmissionsView() {
                   </div>
                 </td>
                 <td>
+                  <span className="badge-category-mini">{s.candidateClass}</span>
+                </td>
+                <td>
                   <strong>{s.assessmentTitle}</strong>
                 </td>
                 <td>
-                  <StatusBadge status={s.status} />
-                </td>
-                <td>
-                  <strong className={s.status === 'TERMINATED_VIOLATIONS' ? 'text-danger' : 'score-highlight'}>
-                    {s.score} / {s.maxMarks}
-                  </strong>
-                </td>
-                <td>{s.passedQuestions}</td>
-                <td>
-                  <span className={s.violations >= 5 ? 'text-danger font-bold' : s.violations > 0 ? 'text-warning' : 'text-success'}>
-                    {s.violations} / 10
+                  <span className={`badge-attendance-pill ${s.attendanceStatus === 'ATTENDED' ? 'attended' : 'absent'}`}>
+                    {s.attendanceStatus === 'ATTENDED' ? '● Attended' : '○ Absent'}
                   </span>
+                </td>
+                <td>
+                  {s.attendanceStatus === 'ATTENDED' ? (
+                    <strong className={s.status === 'TERMINATED_VIOLATIONS' ? 'text-danger' : 'score-highlight'}>
+                      {s.score} / {s.maxMarks}
+                    </strong>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </td>
+                <td>
+                  {s.attendanceStatus === 'ATTENDED' ? (
+                    <span className={s.percentage >= 70 ? 'text-success font-bold' : 'text-warning font-bold'}>
+                      {s.percentage}%
+                    </span>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </td>
+                <td>
+                  {s.attendanceStatus === 'ATTENDED' ? (
+                    <span className={s.violations >= 5 ? 'text-danger font-bold' : s.violations > 0 ? 'text-warning' : 'text-success'}>
+                      {s.violations} / 10
+                    </span>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
                 </td>
                 <td className="text-muted">{s.date}</td>
                 <td>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => setSelectedSubmission(s)}
-                  >
-                    Audit Log
-                  </button>
+                  {s.attendanceStatus === 'ATTENDED' ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setSelectedSubmission(s)}
+                    >
+                      Audit Log
+                    </button>
+                  ) : (
+                    <span className="text-dim" style={{ fontSize: '12px' }}>No Attempt</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -172,6 +409,7 @@ export function AdminSubmissionsView() {
               <div>
                 <div className="wizard-tag">Audit Detail #{selectedSubmission.id}</div>
                 <h2 className="wizard-title">{selectedSubmission.candidateName}</h2>
+                <span className="text-muted" style={{ fontSize: '12px' }}>{selectedSubmission.candidateEmail} • {selectedSubmission.candidateClass}</span>
               </div>
               <button type="button" className="modal-close-icon" onClick={() => setSelectedSubmission(null)}>×</button>
             </div>

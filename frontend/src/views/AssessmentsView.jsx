@@ -10,6 +10,9 @@ export function AssessmentsView({ user, onStartExam }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedForCheck, setSelectedForCheck] = useState(null);
+  const [classFilter, setClassFilter] = useState('ALL');
+
+  const studentClass = user?.userClass || 'Second Year - Java & DSA';
 
   useEffect(() => {
     let active = true;
@@ -20,7 +23,12 @@ export function AssessmentsView({ user, onStartExam }) {
       assessmentApi.getMySubmissions(user.id).catch(() => [])
     ]).then(([aList, sList]) => {
       if (active) {
-        setAssessments(aList);
+        // Ensure default target cohorts are assigned if missing
+        const enhanced = aList.map((a, i) => ({
+          ...a,
+          targetClass: a.targetClass || (i === 0 ? 'Second Year - Java & DSA' : i === 1 ? 'Final Year - Placement & Systems' : 'All Classes')
+        }));
+        setAssessments(enhanced);
         setSubmissions(sList);
         setLoading(false);
       }
@@ -31,6 +39,16 @@ export function AssessmentsView({ user, onStartExam }) {
     };
   }, [user.id]);
 
+  const filteredAssessments = assessments.filter(a => {
+    if (classFilter === 'MY_CLASS') {
+      return a.targetClass === 'All Classes' || a.targetClass === studentClass;
+    }
+    if (classFilter !== 'ALL') {
+      return a.targetClass === classFilter || a.targetClass === 'All Classes';
+    }
+    return true;
+  });
+
   return (
     <div className="view-content-wrapper">
       {/* Header Banner */}
@@ -39,8 +57,11 @@ export function AssessmentsView({ user, onStartExam }) {
           <span className="assessments-hero-tag">🛡️ Proctored Assessment Hub</span>
           <h1 className="assessments-hero-title">Certification & Diagnostic Exams</h1>
           <p className="assessments-hero-subtitle">
-            Secure, timed assessments featuring real-time webcam telemetry, Java algorithmic challenges, and conceptual MCQs.
+            Secure, timed assessments featuring real-time webcam telemetry, Java algorithmic challenges, and conceptual MCQs tailored to your cohort level.
           </p>
+          <div className="student-cohort-pill-line">
+            <span className="cohort-indicator-badge">🎓 Your Class: <strong>{studentClass}</strong></span>
+          </div>
         </div>
 
         <div className="assessment-stats-pill">
@@ -56,10 +77,42 @@ export function AssessmentsView({ user, onStartExam }) {
         </div>
       </div>
 
+      {/* Class / Cohort Filter Tabs */}
+      <div className="cohort-filter-tabs-row">
+        <button
+          type="button"
+          className={`btn-cohort-tab ${classFilter === 'ALL' ? 'active' : ''}`}
+          onClick={() => setClassFilter('ALL')}
+        >
+          All Exams ({assessments.length})
+        </button>
+        <button
+          type="button"
+          className={`btn-cohort-tab ${classFilter === 'MY_CLASS' ? 'active' : ''}`}
+          onClick={() => setClassFilter('MY_CLASS')}
+        >
+          🎯 Eligible for My Class
+        </button>
+        <button
+          type="button"
+          className={`btn-cohort-tab ${classFilter === 'Second Year - Java & DSA' ? 'active' : ''}`}
+          onClick={() => setClassFilter('Second Year - Java & DSA')}
+        >
+          2nd Year DSA
+        </button>
+        <button
+          type="button"
+          className={`btn-cohort-tab ${classFilter === 'Final Year - Placement & Systems' ? 'active' : ''}`}
+          onClick={() => setClassFilter('Final Year - Placement & Systems')}
+        >
+          Final Year Placement
+        </button>
+      </div>
+
       {/* Available Assessment Cards Grid */}
       <div className="section-header-block">
-        <h2 className="section-block-title">Available Assessments</h2>
-        <p className="section-block-desc">Select an assessment to initiate the hardware telemetry check and begin.</p>
+        <h2 className="section-block-title">Scheduled Assessments</h2>
+        <p className="section-block-desc">Select an authorized exam to complete camera and device check before entering the proctored arena.</p>
       </div>
 
       {loading ? (
@@ -73,20 +126,25 @@ export function AssessmentsView({ user, onStartExam }) {
             </div>
           ))}
         </div>
-      ) : assessments.length === 0 ? (
+      ) : filteredAssessments.length === 0 ? (
         <EmptyState
           icon="🛡️"
-          title="No assessments published"
-          description="There are currently no proctored assessments scheduled. Check back shortly or practice in the Arena."
+          title="No assessments found for this filter"
+          description="There are currently no proctored assessments scheduled for this cohort level."
         />
       ) : (
         <div className="assessments-cards-grid">
-          {assessments.map((item) => {
+          {filteredAssessments.map((item) => {
             const prevSub = submissions.find((s) => s.assessmentId === item.id);
+            const isEligible = item.targetClass === 'All Classes' || item.targetClass === studentClass;
+
             return (
               <div key={item.id} className="assessment-hub-card">
                 <div className="card-top-badges">
                   <ProctorBadge active={true} />
+                  <span className={`target-class-badge ${isEligible ? 'eligible' : 'locked'}`}>
+                    {isEligible ? '✓ Eligible' : '🔒 Target'}: {item.targetClass || 'All Classes'}
+                  </span>
                   <span className="assessment-marks-pill">{item.totalMarks} Marks</span>
                 </div>
 

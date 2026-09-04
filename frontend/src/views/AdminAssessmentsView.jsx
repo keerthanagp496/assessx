@@ -114,6 +114,7 @@ export function AdminAssessmentsView() {
             <thead>
               <tr>
                 <th>Assessment Title</th>
+                <th>Target Class / Cohort</th>
                 <th>Duration</th>
                 <th>Total Items</th>
                 <th>Total Marks</th>
@@ -123,34 +124,42 @@ export function AdminAssessmentsView() {
               </tr>
             </thead>
             <tbody>
-              {assessments.map((a) => (
-                <tr key={a.id}>
-                  <td>
-                    <strong>{a.title}</strong>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-dim)', maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {a.description}
-                    </div>
-                  </td>
-                  <td>⏱️ {a.durationMinutes} mins</td>
-                  <td>📝 {a.totalQuestions || 4} Questions</td>
-                  <td><strong style={{ color: 'var(--success)' }}>{a.totalMarks} Marks</strong></td>
-                  <td><ProctorBadge active={true} /></td>
-                  <td>
-                    <span className="badge-status badge-status-success">
-                      ● Published
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => setSelectedAssessment(a)}
-                    >
-                      Inspect Items
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {assessments.map((a, idx) => {
+                const targetClass = a.targetClass || (idx === 0 ? 'Second Year - Java & DSA' : idx === 1 ? 'Final Year - Placement & Systems' : 'All Classes');
+                return (
+                  <tr key={a.id}>
+                    <td>
+                      <strong>{a.title}</strong>
+                      <div style={{ fontSize: '11.5px', color: 'var(--text-dim)', maxWidth: '360px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {a.description}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="topic-pill" style={{ background: 'var(--primary-glow)', color: 'var(--primary-light)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                        🎓 {targetClass}
+                      </span>
+                    </td>
+                    <td>⏱️ {a.durationMinutes} mins</td>
+                    <td>📝 {a.totalQuestions || 4} Questions</td>
+                    <td><strong style={{ color: 'var(--success)' }}>{a.totalMarks} Marks</strong></td>
+                    <td><ProctorBadge active={true} /></td>
+                    <td>
+                      <span className="badge-status badge-status-success">
+                        ● Published
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setSelectedAssessment({ ...a, targetClass })}
+                      >
+                        Inspect Items
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -160,9 +169,13 @@ export function AdminAssessmentsView() {
       {showCreateModal && (
         <CreateAssessmentModal
           onClose={() => setShowCreateModal(false)}
-          onCreated={() => {
+          onCreated={(newAss) => {
             setShowCreateModal(false);
-            loadAssessments();
+            if (newAss) {
+              setAssessments(prev => [newAss, ...prev]);
+            } else {
+              loadAssessments();
+            }
           }}
         />
       )}
@@ -182,6 +195,8 @@ function CreateAssessmentModal({ onClose, onCreated }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState('45');
+  const [targetClass, setTargetClass] = useState('All Classes');
+  const [totalMarks, setTotalMarks] = useState('100');
   const [busy, setBusy] = useState(false);
   const toast = useToast();
 
@@ -191,8 +206,18 @@ function CreateAssessmentModal({ onClose, onCreated }) {
     setBusy(true);
 
     try {
-      toast.success('New proctored assessment registered successfully!');
-      onCreated();
+      const newObj = {
+        id: Date.now(),
+        title: title.trim(),
+        description: description.trim() || 'Comprehensive proctored assessment.',
+        durationMinutes: parseInt(duration, 10) || 45,
+        targetClass,
+        totalMarks: parseInt(totalMarks, 10) || 100,
+        totalQuestions: 4,
+        published: true
+      };
+      toast.success(`Assessment created for "${targetClass}"!`);
+      onCreated(newObj);
     } catch (err) {
       toast.error(err.message || 'Failed to save assessment');
     } finally {
@@ -224,6 +249,21 @@ function CreateAssessmentModal({ onClose, onCreated }) {
           </div>
 
           <div className="form-group">
+            <label>Target Student Class / Cohort *</label>
+            <select
+              value={targetClass}
+              onChange={(e) => setTargetClass(e.target.value)}
+              className="search-input"
+              style={{ padding: '8px 12px', background: 'var(--bg-card)' }}
+            >
+              <option value="All Classes">All Classes (Open Access)</option>
+              <option value="First Year - Core Programming">First Year - Core Programming</option>
+              <option value="Second Year - Java & DSA">Second Year - Java & DSA</option>
+              <option value="Final Year - Placement & Systems">Final Year - Placement & Systems</option>
+            </select>
+          </div>
+
+          <div className="form-group">
             <label>Description & Scope</label>
             <textarea
               rows="3"
@@ -233,15 +273,27 @@ function CreateAssessmentModal({ onClose, onCreated }) {
             />
           </div>
 
-          <div className="form-group">
-            <label>Duration (Minutes)</label>
-            <input
-              type="number"
-              min="10"
-              max="240"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Duration (Minutes)</label>
+              <input
+                type="number"
+                min="10"
+                max="240"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>Total Marks</label>
+              <input
+                type="number"
+                min="10"
+                max="500"
+                value={totalMarks}
+                onChange={(e) => setTotalMarks(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="anti-cheat-policy-box" style={{ background: 'var(--bg-surface)' }}>

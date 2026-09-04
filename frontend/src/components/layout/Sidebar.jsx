@@ -13,10 +13,11 @@ export function Sidebar({ activeTab, onSelectTab, user, onToggleRole, onLogout, 
       ]
     },
     {
-      group: 'LEARN',
+      group: 'LEARN & REVISE',
       items: [
+        { id: 'quickprep', label: '⚡ QuickPrep', icon: '⚡', highlight: true },
         { id: 'practice', label: 'Practice Arena', icon: '☕' },
-        { id: 'competitions', label: 'Competitions', icon: '⚡' },
+        { id: 'competitions', label: 'Competitions', icon: '🎯' },
         { id: 'leaderboard', label: 'Leaderboard', icon: '🏆' }
       ]
     },
@@ -45,6 +46,7 @@ export function Sidebar({ activeTab, onSelectTab, user, onToggleRole, onLogout, 
     {
       group: 'CONTENT AUTHORING',
       items: [
+        { id: 'admin_quickprep', label: '⚡ QuickPrep Hub', icon: '⚡' },
         { id: 'admin_practice', label: 'Question Bank', icon: '📝' },
         { id: 'admin_assessments', label: 'Exam Hub', icon: '🛡️' }
       ]
@@ -60,6 +62,7 @@ export function Sidebar({ activeTab, onSelectTab, user, onToggleRole, onLogout, 
       group: 'STUDENT PORTAL PREVIEW',
       items: [
         { id: 'dashboard', label: 'Student View', icon: '👀' },
+        { id: 'quickprep', label: '⚡ QuickPrep', icon: '⚡' },
         { id: 'practice', label: 'Practice Arena', icon: '☕' }
       ]
     }
@@ -91,23 +94,36 @@ export function Sidebar({ activeTab, onSelectTab, user, onToggleRole, onLogout, 
           </div>
         </div>
 
-        {/* Mode Switcher Banner */}
-        <div className="sidebar-mode-switcher-bar">
-          <button
-            type="button"
-            className={`mode-btn ${!isAdmin ? 'active' : ''}`}
-            onClick={() => onToggleRole?.('ROLE_STUDENT')}
-          >
-            👤 Student
-          </button>
-          <button
-            type="button"
-            className={`mode-btn ${isAdmin ? 'active admin-active' : ''}`}
-            onClick={() => onToggleRole?.('ROLE_ADMIN')}
-          >
-            👑 Admin Portal
-          </button>
-        </div>
+        {/* Mode Switcher Banner (ONLY visible to Administrators) */}
+        {isAdmin && (
+          <div className="sidebar-mode-switcher-bar">
+            <button
+              type="button"
+              className={`mode-btn ${activeTab.startsWith('admin_') ? '' : 'active'}`}
+              onClick={() => onSelectTab('dashboard')}
+            >
+              👤 Student View
+            </button>
+            <button
+              type="button"
+              className={`mode-btn ${activeTab.startsWith('admin_') ? 'active admin-active' : ''}`}
+              onClick={() => onSelectTab('admin_dashboard')}
+            >
+              👑 Admin Portal
+            </button>
+          </div>
+        )}
+
+        {/* Student Class Badge for Students */}
+        {!isAdmin && (
+          <div className="student-sidebar-class-badge" style={{ padding: '8px 14px', margin: '0 12px 10px', background: 'rgba(99,102,241,0.08)', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.18)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11.5px', color: 'var(--primary-light)' }}>
+            <span>🎓</span>
+            <div>
+              <div style={{ fontWeight: 600 }}>Student Portal</div>
+              <div style={{ fontSize: '10.5px', color: 'var(--text-dim)' }}>{user?.userClass || 'Second Year - Java & DSA'}</div>
+            </div>
+          </div>
+        )}
 
         {/* Navigation Categories */}
         <nav className="sidebar-menu">

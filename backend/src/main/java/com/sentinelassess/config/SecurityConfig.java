@@ -20,6 +20,7 @@ public class SecurityConfig {
       .authorizeHttpRequests(a->a
        .requestMatchers("/api/v1/auth/**","/api/v1/health","/h2-console/**").permitAll()
        .requestMatchers("/api/v1/practice/admin/**").hasRole("ADMIN")
+       .requestMatchers("/api/v1/quickprep/admin/**").hasRole("ADMIN")
        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
        .anyRequest().authenticated())
       .addFilterBefore(jwt,UsernamePasswordAuthenticationFilter.class)

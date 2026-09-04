@@ -3,7 +3,7 @@ import { practiceApi, assessmentApi } from '../api/client';
 import { DifficultyBadge, PointsBadge } from '../components/common/Badge';
 import { Skeleton } from '../components/common/Skeleton';
 
-export function DashboardView({ user, onNavigateToPractice, onNavigateToAssessments, onSelectProblem, onStartAssessment }) {
+export function DashboardView({ user, onNavigateToPractice, onNavigateToAssessments, onNavigateToQuickPrep, onSelectProblem, onStartAssessment }) {
   const [questions, setQuestions] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -85,10 +85,51 @@ export function DashboardView({ user, onNavigateToPractice, onNavigateToAssessme
         <div className="welcome-quick-actions">
           <button
             type="button"
+            className="btn btn-warning-glow"
+            onClick={onNavigateToQuickPrep}
+          >
+            ⚡ <strong>QuickPrep Revision</strong>
+          </button>
+          <button
+            type="button"
             className="btn btn-primary"
             onClick={onNavigateToPractice}
           >
             ☕ Open Practice Arena
+          </button>
+        </div>
+      </div>
+
+      {/* Prominent QuickPrep Exam Revision Card */}
+      <div className="dashboard-quickprep-banner" onClick={onNavigateToQuickPrep}>
+        <div className="quickprep-banner-left">
+          <div className="banner-flash-tag">
+            <span>⚡ QUICKPREP</span>
+            <span className="badge-new-pulse">EXAM REVISION</span>
+          </div>
+          <h2 className="banner-heading">Exam coming up? Revise Java & DSA in minutes.</h2>
+          <p className="banner-desc">
+            Ultra high-yield conceptual summaries, Java code templates, Big-O tables, and interview traps before your test.
+          </p>
+          <div className="banner-meta-tagline">
+            <span>24 topics available</span>
+            <span>•</span>
+            <span className="text-success">68% completed</span>
+            <span>•</span>
+            <span>⏱️ 10m to 2h structured sprints</span>
+          </div>
+        </div>
+
+        <div className="quickprep-banner-right">
+          <button
+            type="button"
+            className="btn btn-primary btn-lg banner-start-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigateToQuickPrep?.();
+            }}
+          >
+            ⚡ Start QuickPrep →
           </button>
         </div>
       </div>
