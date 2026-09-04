@@ -139,7 +139,7 @@ export function SettingsView({ user }) {
 
             <div className="form-group">
               <label>Email Address</label>
-              <input type="email" value={user?.email || 'student@sentinelassess.local'} disabled />
+              <input type="email" value={user?.email || 'student@assessx.local'} disabled />
             </div>
 
             <div className="form-group">

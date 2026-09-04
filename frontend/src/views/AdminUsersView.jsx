@@ -4,8 +4,8 @@ export function AdminUsersView() {
   const [search, setSearch] = useState('');
 
   const mockUsers = [
-    { id: 1, name: 'Admin User', email: 'admin@sentinelassess.local', role: 'ROLE_ADMIN', solved: 50, points: 1200, status: 'Active', joined: 'Jan 2026' },
-    { id: 2, name: 'Karthik P', email: 'student@sentinelassess.local', role: 'ROLE_STUDENT', solved: 42, points: 380, status: 'Active', joined: 'Mar 2026' },
+    { id: 1, name: 'Admin User', email: 'admin@assessx.local', role: 'ROLE_ADMIN', solved: 50, points: 1200, status: 'Active', joined: 'Jan 2026' },
+    { id: 2, name: 'Karthik P', email: 'student@assessx.local', role: 'ROLE_STUDENT', solved: 42, points: 380, status: 'Active', joined: 'Mar 2026' },
     { id: 3, name: 'Alex Chen', email: 'alex.chen@dev.io', role: 'ROLE_STUDENT', solved: 48, points: 980, status: 'Active', joined: 'Feb 2026' },
     { id: 4, name: 'Samira Khan', email: 'samira.k@outlook.com', role: 'ROLE_STUDENT', solved: 45, points: 920, status: 'Active', joined: 'Feb 2026' },
     { id: 5, name: 'Ravi Kumar', email: 'ravi.kumar@tech.in', role: 'ROLE_STUDENT', solved: 43, points: 890, status: 'Active', joined: 'Mar 2026' }

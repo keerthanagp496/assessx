@@ -18,6 +18,10 @@ public class DataSeeder {
                               AssessmentSubmissionRepository submissions,
                               PasswordEncoder encoder){
   return args->{
+   if(users.findByEmail("admin@assessx.local").isEmpty())
+    users.save(User.builder().username("Admin").email("admin@assessx.local").password(encoder.encode("Admin@123")).role(Role.ROLE_ADMIN).build());
+   if(users.findByEmail("student@assessx.local").isEmpty())
+    users.save(User.builder().username("Student").email("student@assessx.local").password(encoder.encode("Student@123")).role(Role.ROLE_STUDENT).build());
    if(users.findByEmail("admin@sentinelassess.local").isEmpty())
     users.save(User.builder().username("Admin").email("admin@sentinelassess.local").password(encoder.encode("Admin@123")).role(Role.ROLE_ADMIN).build());
    if(users.findByEmail("student@sentinelassess.local").isEmpty())
@@ -52,7 +56,7 @@ public class DataSeeder {
  private void seedAssessments(AssessmentRepository assessments, AssessmentQuestionRepository questions) {
    // Assessment 1: Core Java & Data Structures Proctored Assessment (MCQs + Coding)
    Assessment a1 = Assessment.builder()
-     .title("Sentinel Core Java & Data Structures Proctored Assessment")
+     .title("AssessX Core Java & Data Structures Proctored Assessment")
      .description("Comprehensive proctored assessment evaluating Core Java, Collections, OOPs, and Problem Solving. Includes MCQs and Coding problems. Strict camera proctoring enabled.")
      .durationMinutes(45)
      .published(true)

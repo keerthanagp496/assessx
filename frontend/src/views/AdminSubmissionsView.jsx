@@ -14,9 +14,9 @@ export function AdminSubmissionsView() {
     {
       id: 'sub-101',
       candidateName: 'Karthik P',
-      candidateEmail: 'student@sentinelassess.local',
+      candidateEmail: 'student@assessx.local',
       candidateClass: 'Second Year - Java & DSA',
-      assessmentTitle: 'Sentinel Core Java & Data Structures Proctored Assessment',
+      assessmentTitle: 'AssessX Core Java & Data Structures Proctored Assessment',
       score: 85,
       maxMarks: 100,
       percentage: 85,
@@ -199,7 +199,7 @@ export function AdminSubmissionsView() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `SentinelAssess_Attendance_Score_Report_${Date.now()}.csv`);
+    link.setAttribute('download', `AssessX_Attendance_Score_Report_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

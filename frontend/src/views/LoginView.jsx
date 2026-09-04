@@ -42,7 +42,7 @@ export function LoginView({ onLoginSuccess }) {
   const handleInstantDemoLogin = async (role) => {
     setErrorMsg('');
     setBusy(true);
-    const demoEmail = role === 'admin' ? 'admin@sentinelassess.local' : 'student@sentinelassess.local';
+    const demoEmail = role === 'admin' ? 'admin@assessx.local' : 'student@assessx.local';
     const demoPassword = role === 'admin' ? 'Admin@123' : 'Student@123';
     const demoUsername = role === 'admin' ? 'Admin' : 'Student';
     const demoClass = role === 'admin' ? 'Faculty / Administrator' : 'Second Year - Java & DSA';
@@ -84,13 +84,13 @@ export function LoginView({ onLoginSuccess }) {
     setErrorMsg('');
     if (role === 'student') {
       setUsername('Student');
-      setEmail('student@sentinelassess.local');
+      setEmail('student@assessx.local');
       setPassword('Student@123');
       setUserClass('Second Year - Java & DSA');
       setIsRegister(false);
     } else {
       setUsername('Admin');
-      setEmail('admin@sentinelassess.local');
+      setEmail('admin@assessx.local');
       setPassword('Admin@123');
       setUserClass('Faculty / Administrator');
       setIsRegister(false);
@@ -104,11 +104,11 @@ export function LoginView({ onLoginSuccess }) {
         {/* Brand Header */}
         <div className="auth-brand-badge">
           <span className="brand-logo-icon">◈</span>
-          <span>SentinelAssess</span>
+          <span>AssessX</span>
         </div>
 
         <h1 className="auth-title">
-          {isRegister ? 'Create Account' : 'Sign In to SentinelAssess'}
+          {isRegister ? 'Create Account' : 'Sign In to AssessX'}
         </h1>
         <p className="auth-subtitle">
           AI-Proctored Assessments • Java & DSA Practice • ⚡ QuickPrep
@@ -213,7 +213,7 @@ export function LoginView({ onLoginSuccess }) {
             <label>Email Address</label>
             <input
               type="email"
-              placeholder="e.g. student@sentinelassess.local"
+              placeholder="e.g. student@assessx.local"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

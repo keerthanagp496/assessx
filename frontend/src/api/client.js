@@ -242,7 +242,7 @@ function handleFallback(path, options, originalError) {
     return {
       id,
       username,
-      email: body.email || `${username.toLowerCase()}@sentinelassess.local`,
+      email: body.email || `${username.toLowerCase()}@assessx.local`,
       role,
       token: `demo-jwt-token-${Date.now()}`
     };

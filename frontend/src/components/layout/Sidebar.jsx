@@ -89,7 +89,7 @@ export function Sidebar({ activeTab, onSelectTab, user, onToggleRole, onLogout, 
         <div className="sidebar-brand">
           <div className="brand-logo-icon">◈</div>
           <div className="brand-text-block">
-            <span className="brand-name">SentinelAssess</span>
+            <span className="brand-name">AssessX</span>
             <span className="brand-tagline">Assess • Practice • Compete</span>
           </div>
         </div>

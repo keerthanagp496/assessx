@@ -3,7 +3,7 @@ import React from 'react';
 export function ProfileView({ user }) {
   const profile = {
     username: user?.username || 'Karthik',
-    email: user?.email || 'student@sentinelassess.local',
+    email: user?.email || 'student@assessx.local',
     title: 'Java Developer & Competitive Programmer',
     level: 8,
     points: 380,

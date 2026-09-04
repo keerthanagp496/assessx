@@ -27,7 +27,7 @@ export function AdminDashboardView({ onNavigateToQuestions, onNavigateToAssessme
       <div className="admin-hero-header">
         <div>
           <span className="admin-tag">👑 Platform Administration</span>
-          <h1 className="admin-title">SentinelAssess Control Center</h1>
+          <h1 className="admin-title">AssessX Control Center</h1>
           <p className="admin-subtitle">
             Oversee examination lifecycles, curate the Java problem bank, and inspect real-time candidate submissions.
           </p>
