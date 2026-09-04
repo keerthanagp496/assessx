@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export function Topbar({ user, onToggleMobileMenu, onToggleRole, onSearch, searchQuery = '' }) {
+export function Topbar({ user, onToggleMobileMenu, onToggleRole, onLogout, onSearch, searchQuery = '' }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role === 'ADMIN';
 
@@ -95,6 +95,18 @@ export function Topbar({ user, onToggleMobileMenu, onToggleRole, onSearch, searc
           <span className="user-icon">{isAdmin ? '👑' : '👤'}</span>
           <span className="user-name-short">{user?.username || (isAdmin ? 'Admin' : 'Student')}</span>
         </div>
+
+        {/* Topbar Sign Out / Switch User Button */}
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={onLogout}
+          title="Sign Out to Login / Demo Portal"
+          style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '5px' }}
+        >
+          <span>🚪</span>
+          <span>Sign Out</span>
+        </button>
       </div>
     </header>
   );

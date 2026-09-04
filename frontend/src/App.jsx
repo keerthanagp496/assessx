@@ -181,6 +181,7 @@ function AppContent() {
           user={user}
           onToggleMobileMenu={() => setMobileOpen(!mobileOpen)}
           onToggleRole={handleToggleRole}
+          onLogout={handleLogout}
           onSearch={(query) => {
             setSearchQuery(query);
             if (query && activeTab !== 'practice' && activeTab !== 'quickprep') {
