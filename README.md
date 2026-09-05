@@ -1,4 +1,4 @@
-# SentinelAssess
+# AssessX
 
 Full-stack competitive learning and online assessment platform.
 
